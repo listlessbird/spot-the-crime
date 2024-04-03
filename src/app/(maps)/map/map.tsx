@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 
 import { useGeolocation } from "@uidotdev/usehooks"
 
@@ -17,9 +17,14 @@ const center = {
   lng: -0.09,
 }
 
-function DraggableMarker() {
+function DraggableMarker({
+  initialPosition,
+  setPosition,
+}: {
+  initialPosition: LatLngExpression
+  setPosition: (position: LatLngExpression) => void
+}) {
   const [draggable, setDraggable] = useState(false)
-  const [position, setPosition] = useState(center)
   const markerRef = useRef<any>(null)
   const eventHandlers = useMemo(
     () => ({
@@ -40,8 +45,19 @@ function DraggableMarker() {
     <Marker
       draggable={draggable}
       eventHandlers={eventHandlers}
-      position={position}
+      position={initialPosition}
       ref={markerRef}
+      icon={
+        new L.Icon({
+          iconUrl: MarkerIcon.src,
+          iconRetinaUrl: MarkerIcon.src,
+          iconSize: [25, 41],
+          iconAnchor: [12.5, 41],
+          popupAnchor: [0, -41],
+          shadowUrl: MarkerShadow.src,
+          shadowSize: [41, 41],
+        })
+      }
     >
       <Popup minWidth={90}>
         <span onClick={toggleDraggable}>
@@ -54,36 +70,29 @@ function DraggableMarker() {
   )
 }
 
+function AutoRecenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap()
+
+  useEffect(() => {
+    map.setView([lat, lng])
+    const maxZoom = map.getMaxZoom()
+    map.setZoom(maxZoom - 2)
+  }, [lat, lng])
+
+  return null
+}
+
 export function Map() {
   const { latitude, longitude } = useGeolocation()
 
-  const [coord, setCoord] = useState([latitude, longitude])
+  const [coord, setCoord] = useState<LatLngExpression>([51.505, -0.09])
 
-  // const SearchLocation = () => {
-  //   return (
-  //     <div className="search-location">
-  //       <input type="text" placeholder="Search Location" />
-  //     </div>
-  //   )
-  // }
-
-  // const GetMyLocation = () => {
-  //   const getMyLocation = () => {
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition((position) => {
-  //         setCoord([position.coords.latitude, position.coords.longitude])
-  //       })
-  //     } else {
-  //       console.log("Geolocation is not supported by this browser.")
-  //     }
-  //   }
-
-  //   return (
-  //     <div className="get-my-location">
-  //       <button onClick={getMyLocation}>Get My Location</button>
-  //     </div>
-  //   )
-  // }
+  useEffect(() => {
+    if (latitude && longitude) {
+      console.log({ latitude, longitude })
+      setCoord([latitude, longitude])
+    }
+  }, [latitude, longitude])
 
   return (
     <div>
@@ -91,7 +100,7 @@ export function Map() {
       {/* <GetMyLocation /> */}
       <MapContainer
         center={coord}
-        zoom={13}
+        zoom={5}
         scrollWheelZoom={true}
         className="min-h-[400px] min-w-[400px] h-dvh"
       >
@@ -112,13 +121,14 @@ export function Map() {
               shadowSize: [41, 41],
             })
           }
-          position={[51.505, -0.09]}
+          position={coord}
         >
           <Popup>
             A pretty CSS3 popup. <br /> Easily customizable.
           </Popup>
         </Marker> */}
-        <DraggableMarker />
+        <DraggableMarker initialPosition={coord} setPosition={setCoord} />
+        <AutoRecenter lat={coord[0]} lng={coord[1]} />
       </MapContainer>
     </div>
   )
