@@ -31,3 +31,14 @@ body {
     text-wrap: balance;
   }
 }
+
+html,
+body {
+  /* max-width: 100%; */
+  /* overflow-x: hidden; */
+  /* height: 100%; */
+}
+
+#map {
+  height: 180px;
+}
