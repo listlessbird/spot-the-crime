@@ -14,6 +14,7 @@ import {
   Popup,
   useMap,
   Circle,
+  useMapEvents,
 } from "react-leaflet"
 
 import { useGeolocation } from "@uidotdev/usehooks"
@@ -23,6 +24,31 @@ import MarkerIcon from "leaflet/dist/images/marker-icon.png"
 import MarkerShadow from "leaflet/dist/images/marker-shadow.png"
 
 import "leaflet/dist/leaflet.css"
+
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import { ControlContext, ControlProvider } from "./map-control"
+
+const useMapClickHandler = () => {
+  const [clickedLocations, setClickedLocations] = useState<LatLngExpression[]>(
+    []
+  )
+
+  const handleMapClick = useCallback((event: L.LeafletMouseEvent) => {
+    const { lat, lng } = event.latlng
+    setClickedLocations((prevLocations) => [...prevLocations, [lat, lng]])
+  }, [])
+
+  useMapEvents({
+    click: handleMapClick,
+  })
+
+  return { clickedLocations }
+}
 
 function DraggableMarker({
   initialPosition,
@@ -94,6 +120,10 @@ export function Map() {
 
   const [coord, setCoord] = useState<LatLngExpression>([51.505, -0.09])
 
+  const [map, setMap] = useState(null)
+
+  const { clickedLocations } = useMapClickHandler()
+
   useEffect(() => {
     if (latitude && longitude) {
       console.log({ latitude, longitude })
@@ -118,58 +148,134 @@ export function Map() {
     [coord]
   )
 
-  console.log({ randomCoords })
+  return (
+    <ControlProvider>
+      <div className="relative">
+        <div className="z-10 relative">
+          <MapContainer
+            center={coord}
+            zoom={5}
+            scrollWheelZoom={true}
+            className="min-h-[400px] min-w-[400px] h-dvh"
+            ref={setMap}
+          >
+            <div>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              <DraggableMarker
+                initialPosition={coord}
+                setPosition={setCoord}
+                markerText="Center Point"
+              />
+
+              {/* <MarkerMove
+                initialPosition={coord}
+                setPosition={setCoord}
+                markerText="Movable marker"
+              /> */}
+
+              <AutoRecenter lat={coord[0]} lng={coord[1]} />
+              <Circle
+                center={coord}
+                pathOptions={{ color: "red" }}
+                radius={760}
+                fillOpacity={0}
+              />
+              {randomCoords.map((coords, index) => {
+                return (
+                  <Marker
+                    key={index}
+                    draggable={false}
+                    position={coords.coords}
+                    icon={
+                      new L.Icon({
+                        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${coords.rotation}.png`,
+                        shadowUrl:
+                          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41],
+                      })
+                    }
+                  >
+                    <Popup>
+                      <span>Crime Point</span>
+                    </Popup>
+                  </Marker>
+                )
+              })}
+              {clickedLocations.map((location, index) => (
+                <Marker key={index} position={location} />
+              ))}
+            </div>
+          </MapContainer>
+        </div>
+      </div>
+    </ControlProvider>
+  )
+}
+
+function MarkerAdd({
+  initialPosition,
+  setPosition,
+  markerText = "",
+}: {
+  initialPosition: LatLngExpression
+  markerText?: string
+  setPosition: (position: LatLngExpression) => void
+}) {
+  const [clickedLocations, setClickedLocations] = useState<LatLngExpression[]>(
+    []
+  )
+
+  const handleMapClick = useCallback((event: L.LeafletMouseEvent) => {
+    const { lat, lng } = event.latlng
+    setClickedLocations((prevLocations) => [...prevLocations, [lat, lng]])
+  }, [])
 
   return (
-    <div>
-      <MapContainer
-        center={coord}
-        zoom={5}
-        scrollWheelZoom={true}
-        className="min-h-[400px] min-w-[400px] h-dvh"
+    <>
+      <Marker
+        position={initialPosition}
+        draggable={true}
+        icon={
+          new L.Icon({
+            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png`,
+            shadowUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+          })
+        }
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        <Popup minWidth={90}>
+          <span>{markerText}</span>
+        </Popup>
+      </Marker>
+      {clickedLocations.map((location, index) => (
+        <Marker
+          key={index}
+          position={location}
+          draggable={true}
+          icon={
+            new L.Icon({
+              iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png`,
+              shadowUrl:
+                "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41],
+            })
+          }
         />
-
-        <DraggableMarker
-          initialPosition={coord}
-          setPosition={setCoord}
-          markerText="Center Point"
-        />
-        <AutoRecenter lat={coord[0]} lng={coord[1]} />
-        <Circle
-          center={coord}
-          pathOptions={{ color: "red" }}
-          radius={760}
-          fillOpacity={0}
-        />
-        {randomCoords.map((coords, index) => {
-          return (
-            <Marker
-              key={index}
-              draggable={true}
-              position={coords.coords}
-              icon={
-                new L.Icon({
-                  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${coords.rotation}.png`,
-                  shadowUrl:
-                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-                  iconSize: [25, 41],
-                  iconAnchor: [12, 41],
-                  popupAnchor: [1, -34],
-                  shadowSize: [41, 41],
-                })
-              }
-            >
-              <Popup>
-                <span>Crime Point</span>
-              </Popup>
-            </Marker>
-          )
-        })}
-      </MapContainer>
-    </div>
+      ))}
+    </>
   )
 }

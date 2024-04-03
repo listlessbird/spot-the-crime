@@ -12,13 +12,6 @@ const Map = dynamicImport(
 
 export default function Home() {
   return (
-    // <div className="grid grid-cols-[300px_1fr] w-full container max-w-2xl">
-    //   <MapSidebar />
-    //   <div className="min-h-dvh">
-    //     <Map />
-    //   </div>
-    // </div>
-
     <div className="grid size-full lg:grid-cols-[300px_1fr]">
       <MapSidebar />
       <div className="flex flex-col w-full">

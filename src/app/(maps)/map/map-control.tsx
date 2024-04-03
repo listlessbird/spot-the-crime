@@ -1,7 +1,19 @@
-import React, { createContext } from "react"
+import { LatLngExpression } from "leaflet"
+import React, { createContext, useState } from "react"
 
-export const ControlContext = createContext({})
+type ControlContextType = {
+  pos: LatLngExpression
+  setPos: (pos: LatLngExpression) => void
+}
 
-export function ControlProvider({ children }: React.ReactNode) {
-  return <ControlContext.Provider value={}>{children}</ControlContext.Provider>
+export const ControlContext = createContext<ControlContextType | {}>({})
+
+export function ControlProvider({ children }: { children: React.ReactNode }) {
+  const [pos, setPos] = useState({ lat: null, lng: null })
+
+  return (
+    <ControlContext.Provider value={{ pos, setPos }}>
+      {children}
+    </ControlContext.Provider>
+  )
 }
