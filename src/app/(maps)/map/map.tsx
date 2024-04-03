@@ -1,8 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import {
+  generateRandomCoordinatesWithinRadius,
+  randomChoice,
+} from "@/lib/utils"
+
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  Circle,
+} from "react-leaflet"
 
 import { useGeolocation } from "@uidotdev/usehooks"
 
@@ -12,18 +24,16 @@ import MarkerShadow from "leaflet/dist/images/marker-shadow.png"
 
 import "leaflet/dist/leaflet.css"
 
-const center = {
-  lat: 51.505,
-  lng: -0.09,
-}
-
 function DraggableMarker({
   initialPosition,
   setPosition,
+  markerText = "",
+  ...props
 }: {
   initialPosition: LatLngExpression
+  markerText?: string
   setPosition: (position: LatLngExpression) => void
-}) {
+} & React.ComponentProps<typeof Marker>) {
   const [draggable, setDraggable] = useState(false)
   const markerRef = useRef<any>(null)
   const eventHandlers = useMemo(
@@ -58,13 +68,10 @@ function DraggableMarker({
           shadowSize: [41, 41],
         })
       }
+      {...props}
     >
       <Popup minWidth={90}>
-        <span onClick={toggleDraggable}>
-          {draggable
-            ? "Marker is draggable"
-            : "Click here to make marker draggable"}
-        </span>
+        <span onClick={toggleDraggable}>{markerText}</span>
       </Popup>
     </Marker>
   )
@@ -94,10 +101,27 @@ export function Map() {
     }
   }, [latitude, longitude])
 
+  const randomCoords = useMemo(
+    () =>
+      Array.from({ length: 10 }, () => ({
+        coords: generateRandomCoordinatesWithinRadius(coord[0], coord[1], 768),
+        rotation: randomChoice([
+          "black",
+          "grey",
+          "violet",
+          "yellow",
+          "orange",
+          "red",
+          "gold",
+        ]),
+      })),
+    [coord]
+  )
+
+  console.log({ randomCoords })
+
   return (
     <div>
-      {/* <SearchLocation /> */}
-      {/* <GetMyLocation /> */}
       <MapContainer
         center={coord}
         zoom={5}
@@ -109,26 +133,42 @@ export function Map() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* <Marker
-          icon={
-            new L.Icon({
-              iconUrl: MarkerIcon.src,
-              iconRetinaUrl: MarkerIcon.src,
-              iconSize: [25, 41],
-              iconAnchor: [12.5, 41],
-              popupAnchor: [0, -41],
-              shadowUrl: MarkerShadow.src,
-              shadowSize: [41, 41],
-            })
-          }
-          position={coord}
-        >
-          <Popup>
-            A pretty CSS3 popup. <br /> Easily customizable.
-          </Popup>
-        </Marker> */}
-        <DraggableMarker initialPosition={coord} setPosition={setCoord} />
+        <DraggableMarker
+          initialPosition={coord}
+          setPosition={setCoord}
+          markerText="Center Point"
+        />
         <AutoRecenter lat={coord[0]} lng={coord[1]} />
+        <Circle
+          center={coord}
+          pathOptions={{ color: "red" }}
+          radius={760}
+          fillOpacity={0}
+        />
+        {randomCoords.map((coords, index) => {
+          return (
+            <Marker
+              key={index}
+              draggable={true}
+              position={coords.coords}
+              icon={
+                new L.Icon({
+                  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${coords.rotation}.png`,
+                  shadowUrl:
+                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41],
+                })
+              }
+            >
+              <Popup>
+                <span>Crime Point</span>
+              </Popup>
+            </Marker>
+          )
+        })}
       </MapContainer>
     </div>
   )
