@@ -35,14 +35,16 @@ function MapWrapper({
   center: LatLngExpression
 }) {
   return (
-    <MapContainer
-      center={center}
-      zoom={5}
-      scrollWheelZoom={true}
-      className="min-h-[400px] min-w-[400px] h-dvh"
-    >
-      {children}
-    </MapContainer>
+    <div className="relative z-12">
+      <MapContainer
+        center={center}
+        zoom={5}
+        scrollWheelZoom={true}
+        className="min-h-[400px] min-w-[400px] h-dvh"
+      >
+        {children}
+      </MapContainer>
+    </div>
   )
 }
 
