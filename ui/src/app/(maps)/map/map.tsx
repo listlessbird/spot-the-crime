@@ -160,7 +160,9 @@ const AddMarkerOnClick = () => {
       const newCircleMarkers = Array.from(
         {
           length: randomChoice([
-            ...Array.from({ length: 10 }, () => Math.floor(Math.random() * 10)),
+            ...Array.from({ length: 10 }, () =>
+              Math.floor(Math.random() * 10 + 5)
+            ),
           ]),
         },
         () => {

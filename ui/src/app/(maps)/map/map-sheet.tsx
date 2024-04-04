@@ -74,7 +74,9 @@ const formSchema = z.object({
   name: z.string(),
   type: z.string(),
   date: z.date(),
-  location: z.string(),
+  // get this from address later
+  latitude: z.number(),
+  longitude: z.number(),
 })
 
 export function MapSheet({ ...props }) {
@@ -84,12 +86,24 @@ export function MapSheet({ ...props }) {
       name: "",
       type: "",
       date: new Date(),
-      location: "",
+      latitude: 0,
+      longitude: 0,
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    fetch(process.env.NEXT_PUBLIC_API_URL as string, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        crimeType: values.type,
+        date: values.date,
+        latitude: values.latitude,
+        longitude: values.longitude,
+      }),
+    })
   }
 
   return (
@@ -187,23 +201,58 @@ export function MapSheet({ ...props }) {
                   </FormItem>
                 )}
               />
-              <Separator />
 
+
+
+              <Separator />
               <FormField
-                name="type"
+                name="latitude"
                 control={sheetForm.control}
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="type" className="text-right">
-                        Address
+                      <FormLabel htmlFor="latitude" className="text-right">
+                        Latitude
                       </FormLabel>
                       <FormControl>
-                        <Textarea id="type" className="col-span-3" {...field} />
+                        <Input id="latitude" className="col-span-3" {...field} />
                       </FormControl>
                     </div>
                   </FormItem>
                 )}
+              />
+
+              <FormField
+                name="longitude"
+                control={sheetForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel htmlFor="longitude" className="text-right">
+                        Longitude
+                      </FormLabel>
+                      <FormControl>
+                        <Input id="longitude" className="col-span-3" {...field} />
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              {/* <FormField
+                name="address"
+                control={sheetForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel htmlFor="address" className="text-right">
+                        Address
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea id="address" className="col-span-3" {...field} />
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )} */}
               />
             </div>
             <SheetFooter>
