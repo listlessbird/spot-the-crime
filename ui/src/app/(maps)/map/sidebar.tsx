@@ -1,14 +1,66 @@
 import { Button } from "@/components/ui/button"
-import {
-  Layers,
-  LayersIcon,
-  MapIcon,
-  MapPinIcon,
-  SquarePen,
-  Text,
-} from "lucide-react"
+import { LayersIcon, MapIcon, MapPinIcon } from "lucide-react"
 import Link from "next/link"
 import { MapSheet } from "./map-sheet"
+
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { z } from "zod"
+import { Slider } from "@/components/ui/slider"
+import { useLayoutState } from "./layout-provider"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label"
+
+function MapGenParams() {
+  const { setGenOptions, hasPlaced } = useLayoutState()
+
+  const [loading, setLoading] = useState(false)
+
+  const [radius, setRadius] = useState(0)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-pretty">Set the parameters</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4">
+          <Label htmlFor="radius">Radius ({radius}) :</Label>
+          <Slider
+            id="radius"
+            defaultValue={[10]}
+            max={100}
+            step={5}
+            // value={[]}
+            onValueCommit={(value) => {
+              setRadius(value[0])
+            }}
+          />
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button
+          onClick={() => {
+            // artificial exponential delay
+            setTimeout(() => {
+              setGenOptions({ radius, hotspotCount: 0 })
+              setLoading(false)
+            }, 2.3e3)
+          }}
+          className={cn(loading && "animate-spin")}
+        >
+          {loading ? "Generating..." : "Generate"}
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
 
 export default function MapSidebar() {
   return (
@@ -86,6 +138,9 @@ export default function MapSidebar() {
                 10
               </span>
             </div> */}
+            <div className="justify-self-center">
+              <MapGenParams />
+            </div>
           </div>
         </div>
       </div>

@@ -26,6 +26,7 @@ import MarkerShadow from "leaflet/dist/images/marker-shadow.png"
 import "leaflet/dist/leaflet.css"
 
 import { ControlContext, ControlProvider } from "./map-control"
+import { useLayoutState } from "./layout-provider"
 
 function MapWrapper({
   children,
@@ -114,11 +115,20 @@ function AutoRecenter({ lat, lng }: { lat: number; lng: number }) {
 }
 
 const AddMarkerOnClick = () => {
-  const map = useMapEvents({
-    click(e) {
-      L.marker(e.latlng)
+  const { setHasPlaced, genOptions, setGenOptions } = useLayoutState()
+
+  console.log({ genOptions })
+
+  const assets = useCallback(
+    (latlng: LatLngExpression) => {
+      const newMarker = L.marker(latlng)
         .addEventListener("click", function (e) {
           e.target.remove()
+          setHasPlaced(false)
+          setGenOptions((prev) => ({
+            ...prev,
+            placedItems: prev.placedItems.filter((item) => item !== e.target),
+          }))
         })
         .setIcon(
           new L.Icon({
@@ -131,9 +141,34 @@ const AddMarkerOnClick = () => {
             shadowSize: [41, 41],
           })
         )
-        .addTo(map)
+
+      const newCircle = L.circle(latlng, {
+        radius: genOptions.radius,
+      })
+
+      const assets = [newMarker, newCircle]
+
+      setGenOptions((prev) => ({
+        ...prev,
+        placedItems: [...prev.placedItems, ...assets],
+      }))
+
+      return assets
+    },
+    [genOptions, setHasPlaced]
+  )
+
+  const map = useMapEvents({
+    click(e) {
+      setHasPlaced(true)
+
+      assets(e.latlng).forEach((asset) => asset.addTo(map))
     },
   })
+
+  const clearPlacedItems = () => {
+    genOptions.placedItems.forEach((item) => item.remove())
+  }
 
   return null
 }
@@ -197,26 +232,32 @@ export function Map() {
       />
       {randomCoords.map((coords, index) => {
         return (
-          <Marker
+          <Circle
+            center={coords.coords}
+            pathOptions={{ color: "red" }}
+            radius={20}
             key={index}
-            draggable={false}
-            position={coords.coords}
-            icon={
-              new L.Icon({
-                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${coords.rotation}.png`,
-                shadowUrl:
-                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41],
-              })
-            }
-          >
-            <Popup>
-              <span>Crime Point</span>
-            </Popup>
-          </Marker>
+          />
+          // <Marker
+          //   key={index}
+          //   draggable={false}
+          //   position={coords.coords}
+          //   icon={
+          //     new L.Icon({
+          //       iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${coords.rotation}.png`,
+          //       shadowUrl:
+          //         "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          //       iconSize: [25, 41],
+          //       iconAnchor: [12, 41],
+          //       popupAnchor: [1, -34],
+          //       shadowSize: [41, 41],
+          //     })
+          //   }
+          // >
+          //   <Popup>
+          //     <span>Crime Point</span>
+          //   </Popup>
+          // </Marker>
         )
       })}
     </MapWrapper>
