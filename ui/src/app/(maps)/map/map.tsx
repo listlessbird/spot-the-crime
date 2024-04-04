@@ -155,6 +155,8 @@ const AddMarkerOnClick = () => {
       const newCircle = L.circle(latlng, {
         radius: radius,
         fillOpacity: 0,
+        fillColor: "red",
+        color: "red",
       })
 
       const newCircleMarkers = Array.from(
@@ -171,7 +173,7 @@ const AddMarkerOnClick = () => {
             latlng.lng,
             radius
           )
-          return L.circleMarker(markers)
+          return L.circleMarker(markers, { color: "red", fillColor: "red" })
         }
       )
 
