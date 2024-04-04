@@ -16,25 +16,41 @@ import { useLayoutState } from "./layout-provider"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { LatLngExpression } from "leaflet"
 
-function MapGenParams() {
-  const { setGenOptions, hasPlaced } = useLayoutState()
+function MapGenParams({
+  id,
+  coords,
+  assets,
+}: {
+  id: string
+  coords: LatLngExpression
+  assets: any[]
+}) {
+  const { setGenOptions, hasPlaced, genOptions } = useLayoutState()
 
   const [loading, setLoading] = useState(false)
 
   const [radius, setRadius] = useState(0)
 
+  if (!hasPlaced) return null
+
+  console.log({ id, coords, assets })
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-pretty">Set the parameters</CardTitle>
+        <CardTitle className="text-pretty">
+          Set the parameters for the marker at
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          <Label htmlFor="radius">Radius ({radius}) :</Label>
+          <Label htmlFor="radius">Radius:</Label>
           <Slider
             id="radius"
-            defaultValue={[10]}
+            className="cursor-pointer"
+            defaultValue={[50]}
             max={100}
             step={5}
             // value={[]}
@@ -44,18 +60,31 @@ function MapGenParams() {
           />
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Button
           onClick={() => {
             // artificial exponential delay
-            setTimeout(() => {
-              setGenOptions({ radius, hotspotCount: 0 })
-              setLoading(false)
-            }, 2.3e3)
+            // setTimeout(() => {
+            setGenOptions({
+              ...genOptions,
+              placedItems: genOptions.placedItems.map((item) =>
+                item.id === id ? { ...item, radius } : item
+              ),
+            })
+            setLoading(false)
+            // }, 2.3e3)
           }}
           className={cn(loading && "animate-spin")}
         >
           {loading ? "Generating..." : "Generate"}
+        </Button>
+        <Button
+          onClick={() => {
+            if (genOptions.clearOneItemCb) genOptions.clearOneItemCb(id)
+          }}
+          variant="ghost"
+        >
+          Clear
         </Button>
       </CardFooter>
     </Card>
@@ -63,8 +92,10 @@ function MapGenParams() {
 }
 
 export default function MapSidebar() {
+  const { genOptions } = useLayoutState()
+
   return (
-    <div className="border-r bg-gray-100/40 dark:bg-gray-800/40 min-h-screen p-2 flex flex-col">
+    <div className="border-r bg-gray-100/40 dark:bg-gray-800/40 min-h-screen p-2 flex flex-col h-full">
       <div className="flex h-[60px] items-center border-b px-6">
         <Link className="flex items-center gap-2 font-semibold" href="#">
           <MapIcon className="h-6 w-6" />
@@ -138,8 +169,10 @@ export default function MapSidebar() {
                 10
               </span>
             </div> */}
-            <div className="justify-self-center">
-              <MapGenParams />
+            <div className="justify-self-center flex flex-col gap-2 ">
+              {genOptions?.placedItems?.map((item) => (
+                <MapGenParams key={item.id} {...item} />
+              ))}
             </div>
           </div>
         </div>

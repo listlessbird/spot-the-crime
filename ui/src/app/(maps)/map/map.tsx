@@ -121,13 +121,21 @@ const AddMarkerOnClick = () => {
 
   const assets = useCallback(
     (latlng: LatLngExpression) => {
+      const assetsId = Math.random().toString(36).substring(7)
+
       const newMarker = L.marker(latlng)
         .addEventListener("click", function (e) {
           e.target.remove()
           setHasPlaced(false)
+          // setGenOptions((prev) => ({
+          //   ...prev,
+          //   placedItems: prev.placedItems.filter((item) => item !== e.target),
+          // }))
           setGenOptions((prev) => ({
             ...prev,
-            placedItems: prev.placedItems.filter((item) => item !== e.target),
+            placedItems: prev.placedItems.filter(
+              (item) => item.id !== assetsId
+            ),
           }))
         })
         .setIcon(
@@ -142,16 +150,46 @@ const AddMarkerOnClick = () => {
           })
         )
 
+      const radius = randomChoice([430, 523, 472, 410, 568])
+
       const newCircle = L.circle(latlng, {
-        radius: genOptions.radius,
+        radius: radius,
+        fillOpacity: 0,
       })
 
-      const assets = [newMarker, newCircle]
+      const newCircleMarkers = Array.from(
+        {
+          length: randomChoice([
+            ...Array.from({ length: 10 }, () => Math.floor(Math.random() * 10)),
+          ]),
+        },
+        () => {
+          const markers = generateRandomCoordinatesWithinRadius(
+            latlng.lat,
+            latlng.lng,
+            radius
+          )
+          return L.circleMarker(markers)
+        }
+      )
 
-      setGenOptions((prev) => ({
-        ...prev,
-        placedItems: [...prev.placedItems, ...assets],
-      }))
+      const assets = {
+        id: assetsId,
+        coords: latlng,
+        assets: [newMarker, newCircle, ...newCircleMarkers],
+      }
+
+      if (genOptions.placedItems.length > 0) {
+        setGenOptions((prev) => ({
+          ...prev,
+          placedItems: [...prev.placedItems, assets],
+        }))
+      } else {
+        setGenOptions((prev) => ({
+          ...prev,
+          placedItems: [assets],
+        }))
+      }
 
       return assets
     },
@@ -160,15 +198,38 @@ const AddMarkerOnClick = () => {
 
   const map = useMapEvents({
     click(e) {
+      console.log(e.latlng)
       setHasPlaced(true)
 
-      assets(e.latlng).forEach((asset) => asset.addTo(map))
+      assets(e.latlng).assets.forEach((asset) => {
+        asset.addTo(map)
+      })
     },
   })
 
   const clearPlacedItems = () => {
-    genOptions.placedItems.forEach((item) => item.remove())
+    genOptions.placedItems.forEach((item) => {
+      item.assets.forEach((asset) => asset.remove())
+    })
   }
+
+  const clearOneItem = (id: string) => {
+    // remove from dom and from state
+    const item = genOptions.placedItems.find((item) => item.id === id)
+    item?.assets.forEach((asset) => asset.remove())
+    setGenOptions((prev) => ({
+      ...prev,
+      placedItems: prev.placedItems.filter((item) => item.id !== id),
+    }))
+  }
+
+  useEffect(() => {
+    setGenOptions((prev) => ({
+      ...prev,
+      clearPlacedItemsCb: clearPlacedItems,
+      clearOneItemCb: clearOneItem,
+    }))
+  }, [genOptions.placedItems])
 
   return null
 }
@@ -211,11 +272,11 @@ export function Map() {
 
       <AddMarkerOnClick />
 
-      <DraggableMarker
+      {/* <DraggableMarker
         initialPosition={coord}
         setPosition={setCoord}
         markerText="Center Point"
-      />
+      /> */}
 
       {/* <MarkerMove
                 initialPosition={coord}
@@ -224,7 +285,7 @@ export function Map() {
               /> */}
 
       <AutoRecenter lat={coord[0]} lng={coord[1]} />
-      <Circle
+      {/* <Circle
         center={coord}
         pathOptions={{ color: "red" }}
         radius={760}
@@ -259,7 +320,7 @@ export function Map() {
           //   </Popup>
           // </Marker>
         )
-      })}
+      })} */}
     </MapWrapper>
   )
 }

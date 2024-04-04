@@ -1,4 +1,11 @@
+import { LatLngExpression } from "leaflet"
 import { createContext, useContext, useMemo, useState } from "react"
+
+type Item = {
+  id: string
+  coords: LatLngExpression
+  assets: any[]
+}
 
 type LayoutContextType = {
   hasPlaced: boolean
@@ -6,15 +13,17 @@ type LayoutContextType = {
   genOptions: {
     radius: number
     hotspotCount: number
-    placedItems: any[]
+    placedItems: Item[]
     clearPlacedItemsCb: null | (() => void)
+    clearOneItemCb: null | ((id: string) => void)
   }
   setGenOptions: React.Dispatch<
     React.SetStateAction<{
       radius: number
       hotspotCount: number
-      placedItems: any[]
+      placedItems: Item[]
       clearPlacedItemsCb: null | (() => void)
+      clearOneItemCb: null | ((id: string) => void)
     }>
   >
 }

@@ -14,7 +14,7 @@ const Map = dynamicImport(
 export default function Home() {
   return (
     <LayoutProvider>
-      <div className="grid size-full lg:grid-cols-[300px_1fr] overflow-clip relative z-20">
+      <div className="grid size-full lg:grid-cols-[300px_1fr] relative z-20">
         <div className="size-full">
           <div className="fixed left-0 top-0 w-[300px]">
             <MapSidebar />
