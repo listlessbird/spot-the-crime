@@ -163,7 +163,7 @@ const AddMarkerOnClick = () => {
         {
           length: randomChoice([
             ...Array.from({ length: 10 }, () =>
-              Math.floor(Math.random() * 10 + 5)
+              Math.floor(Math.random() * 10 + 3)
             ),
           ]),
         },
@@ -173,7 +173,21 @@ const AddMarkerOnClick = () => {
             latlng.lng,
             radius
           )
-          return L.circleMarker(markers, { color: "red", fillColor: "red" })
+          return L.circleMarker(markers, {
+            color: "red",
+            fillColor: "red",
+          }).bindTooltip(
+            randomChoice([
+              "Murder",
+              "Kidnapping",
+              "Burglary",
+              "Rape",
+              "Robbery",
+            ]),
+            {
+              permanent: true,
+            }
+          )
         }
       )
 
